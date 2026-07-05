@@ -1,26 +1,27 @@
-from fastapi import FastAPI
+from fastapi import Request
 from aiokafka import AIOKafkaProducer
-import asyncio
-from contextlib import asynccontextmanager
-from app.entities import Message
 
 
 class KafkaProducer:
-    def __init__(self, bootstrap_servers):
-        self.bootstrap_servers = bootstrap_servers
-        self.producer = None
+    def __init__(self):
+        self._producer: AIOKafkaProducer | None = None
 
     async def start(self):
-        self.producer = AIOKafkaProducer(bootstrap_servers=self.bootstrap_servers)
-        await self.producer.start()
+        self._producer = AIOKafkaProducer(
+            bootstrap_servers="localhost:29092",
+        )
+        await self._producer.start()
 
     async def stop(self):
-        if self.producer:
-            await self.producer.stop()
+        if self._producer:
+            await self._producer.stop()
 
     async def send(self, topic, value):
-        if self.producer:
-            await self.producer.send_and_wait(topic, value.encode("utf-8"))
+        if self._producer is None:
+            raise RuntimeError("Producer is not started")
+
+        await self._producer.send_and_wait(topic, value.encode("utf-8"))
 
 
-producer = KafkaProducer(bootstrap_servers="localhost:29092")
+def get_producer(request: Request) -> KafkaProducer:
+    return request.app.state.producer
