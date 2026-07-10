@@ -8,4 +8,5 @@ dependencies = [
     "aiokafka>=0.14.0",
     "fastapi>=0.139.0",
     "kafka-python>=3.0.7",
+    "uvicorn>=0.51.0",
 ]
